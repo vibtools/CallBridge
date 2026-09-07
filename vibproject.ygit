@@ -1,0 +1,115 @@
+{
+  "$schema": "https://schema.ygit.dev/vpms/v2/vibproject.schema.json",
+  "schemaVersion": 2,
+  "manifestVersion": "2.0.0",
+  "project": {
+    "id": "cloud-pbx-phone",
+    "name": "cloud-pbx-phone",
+    "slug": "cloud-pbx-phone",
+    "displayName": "Cloud PBX Phone",
+    "description": "UI-only Cloud PBX Phone operations dashboard demo for live calls, incoming calls, CDR, queues, agents, call analytics, and dual dark/light themes.",
+    "summary": "A compact React/Vite Cloud PBX Phone operations console with dual-theme UI and a persistent timestamp-driven local call runtime.",
+    "version": "0.3.1",
+    "status": "development",
+    "visibility": "private",
+    "category": "telephony-ui",
+    "keywords": [
+      "pbx",
+      "cdr",
+      "call-history",
+      "live-calls",
+      "call-center",
+      "react",
+      "vite",
+      "ui-demo"
+    ]
+  },
+  "classification": {
+    "ownerType": "organization",
+    "productType": "application",
+    "applicationType": "web-application",
+    "distribution": "internal",
+    "lifecycle": "development"
+  },
+  "organization": {
+    "company": "Vib Tools",
+    "owner": "Vib Tools",
+    "maintainers": [
+      "Vib Tools Core Team"
+    ],
+    "contributors": [],
+    "contact": {
+      "email": "opensource@vib.tools",
+      "website": "https://vib.tools/"
+    }
+  },
+  "branding": {
+    "productName": "Cloud PBX Phone",
+    "shortName": "Cloud PBX",
+    "theme": "dark"
+  },
+  "license": {
+    "name": "MIT License",
+    "spdx": "MIT",
+    "file": "LICENSE"
+  },
+  "entrypoints": {
+    "application": "src/main.tsx",
+    "documentation": "docs/index.md",
+    "tests": "tests/"
+  },
+  "paths": {
+    "source": "src/",
+    "tests": "tests/",
+    "documentation": "docs/",
+    "scripts": "scripts/",
+    "assets": "assets/",
+    "examples": "examples/",
+    "configuration": "config/",
+    "data": "data/",
+    "project": "project/"
+  },
+  "dependencies": {
+    "required": [
+      "React",
+      "Vite",
+      "TypeScript",
+      "Tailwind CSS"
+    ],
+    "optional": [
+      "shadcn/ui",
+      "TanStack Table",
+      "Recharts"
+    ],
+    "externalServices": []
+  },
+  "documentation": {
+    "readme": "README.md",
+    "structure": "PROJECT_STRUCTURE.md",
+    "changelog": "CHANGELOG.md",
+    "license": "LICENSE",
+    "docsRoot": "docs/"
+  },
+  "release": {
+    "versioning": "Semantic Versioning",
+    "latestVersion": "0.3.1",
+    "releaseNotes": "docs/release-notes/"
+  },
+  "ai": {
+    "enabled": true,
+    "repositoryContext": true,
+    "documentationContext": true,
+    "projectStructure": true,
+    "codingGuidelines": true,
+    "architectureGuidelines": true,
+    "entrypointDiscovery": true
+  },
+  "metadata": {
+    "manifestAuthor": "Vib Tools",
+    "generator": "ChatGPT v0.3.1 persistent event-driven call runtime repair under approved scope",
+    "specification": "VPMS",
+    "specificationVersion": "2.0.0",
+    "templateRepository": "vibtools/vibproject-template",
+    "templateBaseline": "a106198176e281bff0afa9057e40a2b156959dd4"
+  }
+}

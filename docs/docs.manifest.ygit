@@ -1,0 +1,152 @@
+{
+  "$schema": "https://schema.ygit.dev/dpms/v1/docs.manifest.schema.json",
+  "schemaVersion": 1,
+  "manifestVersion": "1.0.0",
+  "documentation": {
+    "id": "cloud-pbx-phone",
+    "title": "Cloud PBX Phone Documentation",
+    "description": "Public user documentation for the Cloud PBX Phone UI-only operations dashboard demo with dark and light themes.",
+    "docsRoot": "docs/",
+    "defaultLanguage": "en",
+    "status": "draft",
+    "tags": [
+      "pbx",
+      "cdr",
+      "call-history",
+      "live-calls",
+      "call-center",
+      "ui-demo"
+    ],
+    "defaultDocument": "index.md"
+  },
+  "discovery": {
+    "enabled": true,
+    "recursive": true,
+    "include": [
+      "**/*.md",
+      "**/*.mdx"
+    ],
+    "exclude": [
+      "media/**",
+      "**/README.md"
+    ],
+    "extensions": [
+      "md",
+      "mdx"
+    ],
+    "ignoreHidden": true,
+    "followSymlink": false
+  },
+  "structure": {
+    "autoGenerate": true,
+    "sort": "manual",
+    "maxDepth": 10,
+    "sections": [
+      {
+        "id": "getting-started",
+        "title": "Getting Started",
+        "description": "Introduction and local UI demo setup.",
+        "icon": "rocket",
+        "path": "getting-started/",
+        "order": 1,
+        "hidden": false,
+        "collapsed": false
+      },
+      {
+        "id": "guides",
+        "title": "Guides",
+        "description": "Step-by-step user workflows for the PBX UI demo.",
+        "icon": "book-open",
+        "path": "guides/",
+        "order": 2,
+        "hidden": false,
+        "collapsed": false
+      },
+      {
+        "id": "features",
+        "title": "Features",
+        "description": "User-facing PBX operations UI capabilities.",
+        "icon": "sparkles",
+        "path": "features/",
+        "order": 3,
+        "hidden": false,
+        "collapsed": false
+      },
+      {
+        "id": "configuration",
+        "title": "Configuration",
+        "description": "Public configuration information when published.",
+        "icon": "settings",
+        "path": "configuration/",
+        "order": 4,
+        "hidden": false,
+        "collapsed": false
+      },
+      {
+        "id": "api",
+        "title": "API Reference",
+        "description": "Reserved for future public APIs if separately approved.",
+        "icon": "code",
+        "path": "api/",
+        "order": 5,
+        "hidden": false,
+        "collapsed": true
+      },
+      {
+        "id": "tutorials",
+        "title": "Tutorials",
+        "description": "Hands-on learning resources.",
+        "icon": "graduation-cap",
+        "path": "tutorials/",
+        "order": 6,
+        "hidden": false,
+        "collapsed": true
+      },
+      {
+        "id": "faq",
+        "title": "FAQ",
+        "description": "Frequently asked questions.",
+        "icon": "circle-help",
+        "path": "faq/",
+        "order": 7,
+        "hidden": false,
+        "collapsed": true
+      },
+      {
+        "id": "troubleshooting",
+        "title": "Troubleshooting",
+        "description": "Common UI-demo problems and solutions.",
+        "icon": "triangle-alert",
+        "path": "troubleshooting/",
+        "order": 8,
+        "hidden": false,
+        "collapsed": true
+      },
+      {
+        "id": "release-notes",
+        "title": "Release Notes",
+        "description": "Version history and public release changes.",
+        "icon": "history",
+        "path": "release-notes/",
+        "order": 9,
+        "hidden": false,
+        "collapsed": true
+      }
+    ]
+  },
+  "versions": {
+    "enabled": false,
+    "current": "0.3.1",
+    "latest": "0.3.1",
+    "available": [
+      "0.3.1",
+      "0.3.0",
+      "0.2.1",
+      "0.2.0",
+      "0.1.1",
+      "0.1.0"
+    ],
+    "strategy": "directory"
+  },
+  "custom": {}
+}

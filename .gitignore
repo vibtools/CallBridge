@@ -1,0 +1,29 @@
+# VibProject fresh-project policy
+# Derived from vibtools/vibproject-template baseline:
+# a106198176e281bff0afa9057e40a2b156959dd4
+
+# Private/internal project workspace
+/project/*
+
+# Node/Vite
+node_modules/
+dist/
+.vite/
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test/cache
+coverage/
+.pytest_cache/
+__pycache__/
