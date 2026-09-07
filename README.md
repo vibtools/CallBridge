@@ -2,21 +2,18 @@
 
 **CallBridge** is an open-source, self-hosted PBX (Private Branch Exchange) system designed to simplify business communication. Built for flexibility and scale, it enables organizations to manage inbound/outbound calls, set up IVR menus, handle extensions, and integrate with CRMs — all without vendor lock-in.
 
-## ✨ Features
-
-- 📞 **Call Routing** — Intelligent inbound/outbound call routing
-- 🎙️ **IVR & Auto-Attendant** — Customizable voice menus
-- 👥 **Extension Management** — Easy user & department setup
-- 🔗 **API & Webhooks** — Integrate with your existing tools
-- 📊 **Call Analytics** — Real-time monitoring & reporting
-- 🔒 **Self-Hosted** — Full control over your data
-
-## 🚀 Quick Start
-
-```bash
-git clone https://github.com/vibtools/CallBridge.git
-cd CallBridge
-docker-compose up -d
+```mermaid
+mindmap
+  root(("CallBridge"))
+    Features("✨ Features")
+      Routing("📞 Call Routing — Intelligent inbound/outbound call routing")
+      IVR("🎙️ IVR & Auto-Attendant — Customizable voice menus")
+      Ext("👥 Extension Management — Easy user & department setup")
+      Api("🔗 API & Webhooks — Integrate with your existing tools")
+      Analytics("📊 Call Analytics — Real-time monitoring & reporting")
+      Host("🔒 Self-Hosted — Full control over your data")
+    Start("🚀 Quick Start")
+      Cmd["git clone https://github.com/vibtools/CallBridge.git<br/>cd CallBridge<br/>docker-compose up -d"]
 ```
 
 ---

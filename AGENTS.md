@@ -26,4 +26,4 @@ Do not initialize, stage, commit, alter remotes, or publish Git state unless exp
 
 ## README Freeze Rule
 
-**CRITICAL**: The `CallBridge` branding, description, features, and quick start block at the very top of `README.md` is **FROZEN**. It must NEVER be removed, modified, or overwritten under any circumstances. Always preserve this section exactly as it is.
+**CRITICAL**: The `CallBridge` branding, description, and the Mermaid diagram (mindmap) for features and quick start at the very top of `README.md` are **FROZEN**. It must NEVER be removed, modified, or overwritten under any circumstances. Always preserve this section exactly as it is in its visual design structure.
