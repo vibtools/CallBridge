@@ -103,5 +103,8 @@ export default function App() {
     : page === "queues" ? <QueuesPage queues={runtimeQueues} />
     : <AgentsPage agents={runtimeAgents} />
 
-  return <><AppShell page={page} onPageChange={setPage} theme={theme} onThemeToggle={() => setTheme((current) => current === "dark" ? "light" : "dark")}>{content}</AppShell><CallDetailDrawer call={selected} onClose={() => setSelectedId(null)} /></>
+  const liveCount = calls.filter((c) => ["connected", "hold", "ringing", "waiting"].includes(c.status)).length
+  const incomingCount = calls.filter((c) => c.direction === "inbound" && ["ringing", "waiting"].includes(c.status)).length
+
+  return <><AppShell page={page} onPageChange={setPage} theme={theme} onThemeToggle={() => setTheme((current) => current === "dark" ? "light" : "dark")} liveCount={liveCount} incomingCount={incomingCount} notificationCount={0}>{content}</AppShell><CallDetailDrawer call={selected} onClose={() => setSelectedId(null)} /></>
 }
