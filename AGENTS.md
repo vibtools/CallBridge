@@ -23,3 +23,7 @@ The approved initial scope is a UI-only PBX operations dashboard. No SIP, WebRTC
 ## Git Behavior
 
 Do not initialize, stage, commit, alter remotes, or publish Git state unless explicitly authorized.
+
+## README Freeze Rule
+
+**CRITICAL**: The `CallBridge` branding, description, features, and quick start block at the very top of `README.md` is **FROZEN**. It must NEVER be removed, modified, or overwritten under any circumstances. Always preserve this section exactly as it is.
