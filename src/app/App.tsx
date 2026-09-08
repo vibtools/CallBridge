@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import { AppShell } from "@/components/layout/AppShell"
 import { CallDetailDrawer } from "@/components/pbx/CallDetailDrawer"
 import { AgentsPage } from "@/features/agents/AgentsPage"
@@ -21,6 +21,7 @@ import { PhonebookPage } from "@/features/directory/PhonebookPage"
 
 import { armRingtone, setRingtoneActive, stopRingtone } from "@/lib/ringtone"
 import { fetchSettingsFromDb, saveSettingsToDb } from "@/lib/settingsDb"
+import { fetchCallsFromDb, syncCallsToDb } from "@/lib/callsDb"
 import {
   HEARTBEAT_MS,
 
@@ -64,6 +65,17 @@ export default function App() {
         setRuntime((current) => updateRuntimeSettings(current, { ...current.settings, ...dbSettings }, Date.now()))
       }
     })
+    
+    // Fetch calls from DB on mount
+    fetchCallsFromDb().then((dbCalls) => {
+      if (dbCalls && dbCalls.length > 0) {
+         setRuntime((current) => ({
+            ...current,
+            calls: dbCalls,
+            callSequence: Math.max(current.callSequence, dbCalls.length + 1)
+         }))
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -79,13 +91,31 @@ export default function App() {
     }
   }, [])
 
+
+  const isSyncingRef = useRef(false);
+  const lastSyncRef = useRef(0);
   useEffect(() => {
     try {
       window.localStorage.setItem(RUNTIME_STORAGE_KEY, serializeRuntime(runtime))
+      
+      // Throttle DB sync to every 5 seconds and prevent concurrent overlapping requests
+      const now = Date.now();
+      if (now - lastSyncRef.current > 5000 && !isSyncingRef.current) {
+        lastSyncRef.current = now;
+        if (runtime.calls.length > 0) {
+          isSyncingRef.current = true;
+          syncCallsToDb(runtime.calls)
+            .catch(() => {})
+            .finally(() => {
+              isSyncingRef.current = false;
+            });
+        }
+      }
     } catch {
       // The runtime remains functional in memory when browser storage is unavailable.
     }
   }, [runtime])
+  
 
   useEffect(() => {
     const unlock = () => { void armRingtone() }
@@ -125,7 +155,7 @@ export default function App() {
     : page === "incoming" ? <IncomingCallsPage calls={calls} onAnswer={(id) => { setRuntime((current) => answerRuntimeCall(current, id, Date.now())); setPage("live") }} onDecline={(id) => setRuntime((current) => declineRuntimeCall(current, id, Date.now()))} />
     : page === "cdr" ? <CallHistoryPage calls={calls} onOpen={openCall} />
     : page === "queues" ? <QueuesPage queues={runtimeQueues} />
-    : page === "settings" ? <SettingsPage settings={runtime.settings} onSettingsChange={(s) => { saveSettingsToDb(s); setRuntime((current) => updateRuntimeSettings(current, s, Date.now())) }} onClearData={() => setRuntime(current => clearRuntimeData(current))} />
+    : page === "settings" ? <SettingsPage settings={runtime.settings} calls={calls} agents={runtimeAgents} onSettingsChange={(s) => { saveSettingsToDb(s); setRuntime((current) => updateRuntimeSettings(current, s, Date.now())) }} onClearData={() => setRuntime(current => clearRuntimeData(current))} />
     : page === "settings-agents" ? <AgentsSettingsPage />
     : page === "did" ? <DidPage dids={runtime.settings.dids || []} />
     : page === "settings-did" ? <DidSettingsPage dids={runtime.settings.dids || []} onUpdate={(newDids) => setRuntime((current) => updateRuntimeSettings(current, { ...current.settings, dids: newDids }, Date.now()))} />

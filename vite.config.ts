@@ -5,6 +5,7 @@ import { defineConfig } from "vite"
 
 export default defineConfig({
   publicDir: "assets",
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
   plugins: [react(), tailwindcss()],
   server: {
     host: '0.0.0.0',

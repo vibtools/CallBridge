@@ -1,23 +1,36 @@
-import { supabase } from "./supabase"
+import { supabase, HAS_SUPABASE } from "./supabase"
 import type { PbxSettings } from "@/runtime/pbxRuntime"
 
-// Define a key or row ID to sync settings. 
-// Since it's a mock project, we can just use ID = 1
+// Define a key or row ID to sync settings.
 const SETTINGS_ROW_ID = 1
+const LOCAL_STORAGE_KEY = "pbx_settings_db"
+
 
 export async function fetchSettingsFromDb(): Promise<Partial<PbxSettings> | null> {
+  if (!HAS_SUPABASE) {
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_KEY)
+      if (cached) {
+        return JSON.parse(cached)
+      }
+    } catch (err) {
+      console.warn("Failed to read settings from localStorage", err)
+    }
+    return null
+  }
+
   try {
     const { data, error } = await supabase
       .from("pbx_settings")
       .select("*")
       .eq("id", SETTINGS_ROW_ID)
       .maybeSingle()
-
+      
     if (error) {
-      console.warn("Failed to fetch settings from Supabase (table may not exist):", error.message)
+      console.warn("Failed to fetch settings from Supabase:", error.message)
       return null
     }
-
+    
     if (data) {
       return {
         countryCode: data.country_code,
@@ -37,7 +50,18 @@ export async function fetchSettingsFromDb(): Promise<Partial<PbxSettings> | null
   return null
 }
 
-export async function saveSettingsToDb(settings: PbxSettings): Promise<void> {
+export async function saveSettingsToDb(settings: PbxSettings): Promise<{ success: boolean; error?: string }> {
+  if (!HAS_SUPABASE) {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings))
+      console.log("Settings synced to localStorage (mock fallback)")
+      return { success: true }
+    } catch (err: any) {
+      console.warn("Error saving settings to local DB", err)
+      return { success: false, error: err?.message || "Failed to save to localStorage" }
+    }
+  }
+
   try {
     const payload = {
       id: SETTINGS_ROW_ID,
@@ -52,17 +76,20 @@ export async function saveSettingsToDb(settings: PbxSettings): Promise<void> {
       queue_assignments: settings.queues,
       updated_at: new Date().toISOString(),
     }
-
+    
     const { error } = await supabase
       .from("pbx_settings")
       .upsert(payload, { onConflict: "id" })
-
+      
     if (error) {
-      console.warn("Failed to save settings to Supabase (table may not exist):", error.message)
+      console.warn("Failed to save settings to Supabase:", error.message)
+      return { success: false, error: error.message }
     } else {
       console.log("Settings synced to Supabase")
+      return { success: true }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.warn("Supabase save exception:", err)
+    return { success: false, error: err?.message || "Unknown error saving to Supabase" }
   }
 }

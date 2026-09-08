@@ -1,8 +1,12 @@
-import { supabase, HAS_SUPABASE } from "./supabase"
+const fs = require('fs');
+const file = 'src/lib/agentsDb.ts';
+
+const content = `import { supabase } from "./supabase"
 import type { Agent } from "@/types/pbx"
 import { agents as defaultAgents } from "@/mock/agents"
 
 const LOCAL_STORAGE_KEY = "pbx_agents_db"
+const HAS_SUPABASE = !!import.meta.env.VITE_SUPABASE_URL
 
 export async function fetchAgentsFromDb(): Promise<Agent[]> {
   if (!HAS_SUPABASE) {
@@ -50,15 +54,14 @@ export async function fetchAgentsFromDb(): Promise<Agent[]> {
   }
 }
 
-export async function saveAllAgentsToDb(agents: Agent[]): Promise<{ success: boolean; count?: number; error?: string }> {
+export async function saveAllAgentsToDb(agents: Agent[]) {
   if (!HAS_SUPABASE) {
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(agents))
-      return { success: true, count: agents.length }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error saving agents to local DB", err)
-      return { success: false, error: err?.message || "Failed to save agents to localStorage" }
     }
+    return
   }
 
   try {
@@ -78,12 +81,9 @@ export async function saveAllAgentsToDb(agents: Agent[]): Promise<{ success: boo
 
     if (error) {
       console.warn("Failed to save agents to Supabase:", error.message)
-      return { success: false, error: error.message }
     }
-    return { success: true, count: agents.length }
-  } catch (err: any) {
+  } catch (err) {
     console.warn("Supabase save exception:", err)
-    return { success: false, error: err?.message || "Unknown error saving agents to Supabase" }
   }
 }
 
@@ -144,3 +144,5 @@ export async function deleteAgentFromDb(id: string) {
     console.warn("Supabase delete exception:", err)
   }
 }
+`
+fs.writeFileSync(file, content);
