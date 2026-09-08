@@ -45,8 +45,42 @@ interface CallSchedule {
   plannedEndAt?: number
 }
 
+export interface PbxSettings {
+  engineEnabled: boolean
+  countryCode: string
+  mockEnabled: boolean
+  minCallDelay: number
+  maxCallDelay: number
+  minCallDuration: number
+  maxCallDuration: number
+  callsPerInterval: number
+  dids: { id: string; number: string; active: boolean; label?: string }[]
+  queues: { id: string; name: string; description: string; active: boolean }[]
+}
+
+const DEFAULT_SETTINGS: PbxSettings = {
+  engineEnabled: true,
+  countryCode: "+1",
+  mockEnabled: true,
+  minCallDelay: 8,
+  maxCallDelay: 45,
+  minCallDuration: 120, // 2 minutes
+  maxCallDuration: 7200, // 2 hours
+  callsPerInterval: 1,
+  dids: [
+    { id: "did-1", number: "+1 800 555 0100", active: true, label: "Main Support" },
+    { id: "did-2", number: "+1 800 555 0110", active: true, label: "Sales Hotline" },
+  ],
+  queues: [
+    { id: "q1", name: "Support", description: "General support inquiries", active: true },
+    { id: "q2", name: "Sales", description: "Sales and product questions", active: true },
+    { id: "q3", name: "Billing", description: "Payment and account issues", active: true },
+  ]
+}
+
 export interface PbxRuntimeState {
   schemaVersion: 1
+  settings: PbxSettings
   calls: PbxCall[]
   nextIncomingAt: number
   lastProcessedAt: number
@@ -87,19 +121,12 @@ function parseTime(value?: string): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function nextIncomingDelayMs(): number {
-  return randomInt(MIN_INCOMING_DELAY_MS, MAX_INCOMING_DELAY_MS)
+function nextIncomingDelayMs(settings: PbxSettings): number {
+  return randomInt(settings.minCallDelay * 1000, settings.maxCallDelay * 1000)
 }
 
-function connectedDurationMs(callId: string): number {
-  // Balanced long-duration distribution: 35% 2-8m, 30% 8-20m,
-  // 20% 20-40m, 10% 40-60m, 5% 60-120m.
-  const roll = hashString(`${callId}:duration-bucket`) % 100
-  if (roll < 35) return stableRange(`${callId}:duration`, MIN_CONNECTED_MS, 8 * 60 * 1000)
-  if (roll < 65) return stableRange(`${callId}:duration`, 8 * 60 * 1000 + 1, 20 * 60 * 1000)
-  if (roll < 85) return stableRange(`${callId}:duration`, 20 * 60 * 1000 + 1, 40 * 60 * 1000)
-  if (roll < 95) return stableRange(`${callId}:duration`, 40 * 60 * 1000 + 1, 60 * 60 * 1000)
-  return stableRange(`${callId}:duration`, 60 * 60 * 1000 + 1, MAX_CONNECTED_MS)
+function connectedDurationMs(callId: string, settings: PbxSettings): number {
+  return stableRange(`${callId}:duration`, settings.minCallDuration * 1000, settings.maxCallDuration * 1000)
 }
 
 function plannedIncomingOutcome(callId: string): { outcome: PlannedOutcome; delayMs: number } {
@@ -108,18 +135,60 @@ function plannedIncomingOutcome(callId: string): { outcome: PlannedOutcome; dela
   return { outcome: "miss", delayMs: stableRange(`${callId}:miss-at`, 24_000, MAX_INCOMING_RING_MS) }
 }
 
-function uniqueCallerNumber(used: Set<string>): string {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    const number = `+1 ${pick(US_AREA_CODES)} 555 ${randomInt(100, 199).toString().padStart(4, "0")}`
+function generateCallerNumber(countryCode: string): string {
+  switch (countryCode) {
+    case "+1": // US/CA
+      return `+1 ${pick(["202", "206", "212", "305", "310", "415", "512", "617", "702", "718"])} ${randomInt(200, 999)} ${randomInt(1000, 9999).toString().padStart(4, "0")}`
+    case "+44": // UK
+      return `+44 7${randomInt(100, 999)} ${randomInt(100000, 999999).toString().padStart(6, "0")}`
+    case "+61": // Australia
+      return `+61 4${randomInt(10, 99)} ${randomInt(100, 999)} ${randomInt(100, 999)}`
+    case "+880": // Bangladesh
+      return `+880 ${pick(["17", "18", "19", "13", "14", "15"])}${randomInt(10, 99)} ${randomInt(100000, 999999).toString().padStart(6, "0")}`
+    case "+91": // India
+      return `+91 ${pick(["9", "8", "7", "6"])}${randomInt(100, 999)} ${randomInt(100000, 999999).toString().padStart(6, "0")}`
+    case "+49": // Germany
+      return `+49 15${randomInt(1, 9)} ${randomInt(1000000, 9999999).toString().padStart(7, "0")}`
+    case "+33": // France
+      return `+33 ${pick(["6", "7"])} ${randomInt(10, 99)} ${randomInt(10, 99)} ${randomInt(10, 99)} ${randomInt(10, 99)}`
+    case "+81": // Japan
+      return `+81 90 ${randomInt(1000, 9999)} ${randomInt(1000, 9999)}`
+    case "+55": // Brazil
+      return `+55 ${randomInt(11, 99)} 9${randomInt(1000, 9999)} ${randomInt(1000, 9999)}`
+    case "+27": // South Africa
+      return `+27 ${pick(["82", "83", "84", "72", "73", "74", "60", "61"])} ${randomInt(100, 999)} ${randomInt(1000, 9999)}`
+    case "+971": // UAE
+      return `+971 5${pick(["0", "4", "5", "6"])} ${randomInt(100, 999)} ${randomInt(1000, 9999)}`
+    case "+65": // Singapore
+      return `+65 ${pick(["8", "9"])}${randomInt(100, 999)} ${randomInt(1000, 9999)}`
+    case "+34": // Spain
+      return `+34 6${randomInt(10, 99)} ${randomInt(100, 999)} ${randomInt(100, 999)}`
+    case "+39": // Italy
+      return `+39 3${randomInt(10, 99)} ${randomInt(1000000, 9999999).toString().padStart(7, "0")}`
+    case "+52": // Mexico
+      return `+52 55 ${randomInt(1000, 9999)} ${randomInt(1000, 9999)}`
+    case "+86": // China
+      return `+86 1${pick(["3", "5", "7", "8"])}${randomInt(100000000, 999999999).toString().padStart(9, "0")}`
+    case "+7": // Russia
+      return `+7 9${randomInt(10, 99)} ${randomInt(100, 999)} ${randomInt(10, 99)} ${randomInt(10, 99)}`
+    case "+92": // Pakistan
+      return `+92 3${pick(["0", "1", "2", "3", "4"])}${randomInt(0, 9)} ${randomInt(1000000, 9999999).toString().padStart(7, "0")}`
+    case "+62": // Indonesia
+      return `+62 8${randomInt(10, 99)} ${randomInt(1000, 9999)} ${randomInt(100, 9999)}`
+    case "+90": // Turkey
+      return `+90 5${randomInt(10, 99)} ${randomInt(100, 999)} ${randomInt(10, 99)} ${randomInt(10, 99)}`
+    default:
+      return `${countryCode} ${randomInt(100, 999)} ${randomInt(1000, 9999)} ${randomInt(1000, 9999)}`
+  }
+}
+
+function uniqueCallerNumber(used: Set<string>, countryCode: string = "+1"): string {
+  for (let attempt = 0; attempt < 1000; attempt += 1) {
+    const number = generateCallerNumber(countryCode)
     if (!used.has(number)) return number
   }
-  for (const area of US_AREA_CODES) {
-    for (let subscriber = 100; subscriber <= 199; subscriber += 1) {
-      const number = `+1 ${area} 555 ${subscriber.toString().padStart(4, "0")}`
-      if (!used.has(number)) return number
-    }
-  }
-  throw new Error("Fictional US caller-number pool exhausted")
+  // Fallback if extremely exhausted
+  return `${countryCode} 555 ${Date.now() % 10000000}`
 }
 
 function makeCallId(atMs: number, sequence: number): string {
@@ -190,8 +259,9 @@ export function createInitialRuntime(nowMs = Date.now()): PbxRuntimeState {
   const used = new Set(calls.map((call) => call.caller).filter((caller) => caller.startsWith("+1 ")))
   return {
     schemaVersion: RUNTIME_SCHEMA_VERSION,
+    settings: DEFAULT_SETTINGS,
     calls,
-    nextIncomingAt: nowMs + nextIncomingDelayMs(),
+    nextIncomingAt: nowMs + nextIncomingDelayMs(DEFAULT_SETTINGS),
     lastProcessedAt: nowMs,
     usedCallerNumbers: [...used],
     callSequence: 200,
@@ -228,12 +298,18 @@ function chooseAvailableAgent(calls: PbxCall[], queue: string | undefined, exclu
 
 function appendIncoming(state: PbxRuntimeState, atMs: number): PbxRuntimeState {
   const used = new Set(state.usedCallerNumbers)
-  const caller = uniqueCallerNumber(used)
+  const caller = uniqueCallerNumber(used, state.settings?.countryCode || "+1")
   used.add(caller)
   const sequence = state.callSequence + 1
   const id = makeCallId(atMs, sequence)
   const profile = pick(QUEUE_PROFILES)
   const callerName = pick(CALLER_NAMES)
+  
+  const activeDids = state.settings?.dids?.filter(d => d.active) || []
+  const didProfile = activeDids.length > 0 ? pick(activeDids) : null
+  const assignedDid = didProfile?.number || profile.did
+  const assignedCallee = didProfile?.label || profile.callee
+
   const policy = plannedIncomingOutcome(id)
   const startedAt = iso(atMs)
   const call: PbxCall = {
@@ -241,8 +317,8 @@ function appendIncoming(state: PbxRuntimeState, atMs: number): PbxRuntimeState {
     direction: "inbound",
     caller,
     callerName,
-    callee: profile.callee,
-    did: profile.did,
+    callee: assignedCallee,
+    did: assignedDid,
     queue: profile.queue,
     status: "ringing",
     startedAt,
@@ -315,7 +391,7 @@ function connectCall(state: PbxRuntimeState, call: PbxCall, atMs: number, agent:
   return {
     ...state,
     calls: state.calls.map((item) => item.id === call.id ? updated : item),
-    schedules: { ...state.schedules, [call.id]: { ...schedule, plannedOutcome: undefined, decisionAt: undefined, ringDeadlineAt: undefined, plannedEndAt: atMs + connectedDurationMs(call.id) } },
+    schedules: { ...state.schedules, [call.id]: { ...schedule, plannedOutcome: undefined, decisionAt: undefined, ringDeadlineAt: undefined, plannedEndAt: atMs + connectedDurationMs(call.id, state.settings) } },
   }
 }
 
@@ -379,14 +455,21 @@ function rebuildAfterLongGap(previous: PbxRuntimeState, nowMs: number): PbxRunti
 }
 
 export function reconcileRuntime(input: PbxRuntimeState, nowMs = Date.now()): PbxRuntimeState {
+  if (input.settings && input.settings.engineEnabled === false) {
+    return { ...input, lastProcessedAt: nowMs };
+  }
   if (nowMs - input.lastProcessedAt >= LONG_INACTIVE_RESET_MS) return rebuildAfterLongGap(input, nowMs)
 
   let state = { ...input }
   let guard = 0
   while (state.nextIncomingAt <= nowMs && guard < 8) {
     const dueAt = state.nextIncomingAt
-    state = appendIncoming(state, dueAt)
-    state = { ...state, nextIncomingAt: dueAt + nextIncomingDelayMs() }
+    if (state.settings.mockEnabled) {
+      for (let i = 0; i < (state.settings.callsPerInterval || 1); i++) {
+        state = appendIncoming(state, dueAt + i * 100) // slight offset for unique IDs
+      }
+    }
+    state = { ...state, nextIncomingAt: dueAt + nextIncomingDelayMs(state.settings) }
     guard += 1
   }
   state = processDueCallEvents(state, nowMs)
@@ -402,6 +485,7 @@ export function restoreRuntime(raw: string | null, nowMs = Date.now()): PbxRunti
     }
     const restored: PbxRuntimeState = {
       schemaVersion: RUNTIME_SCHEMA_VERSION,
+      settings: parsed.settings && typeof parsed.settings === "object" ? { ...DEFAULT_SETTINGS, ...parsed.settings } : DEFAULT_SETTINGS,
       calls: parsed.calls,
       nextIncomingAt: parsed.nextIncomingAt,
       lastProcessedAt: parsed.lastProcessedAt,
@@ -466,20 +550,39 @@ export function deriveRuntimeAgents(state: PbxRuntimeState, nowMs = Date.now()):
 }
 
 export function deriveRuntimeQueues(state: PbxRuntimeState, runtimeAgents: Agent[]): Queue[] {
-  return baseQueues.map((queue) => {
+  const settingsQueues = state.settings.queues || DEFAULT_SETTINGS.queues || []
+  const activeQueues = settingsQueues.filter(q => q.active)
+  
+  return activeQueues.map((queue) => {
     const waitingCalls = state.calls.filter((call) => call.queue === queue.name && call.direction === "inbound" && ["ringing", "waiting"].includes(call.status))
     const queueAgents = runtimeAgents.filter((agent) => agent.queue === queue.name)
     const availableAgents = queueAgents.filter((agent) => agent.status === "available").length
     const averageWaitSeconds = waitingCalls.length === 0 ? 0 : Math.round(waitingCalls.reduce((sum, call) => sum + call.ringSeconds, 0) / waitingCalls.length)
     const longestWaitSeconds = waitingCalls.length === 0 ? 0 : Math.max(...waitingCalls.map((call) => call.ringSeconds))
     return {
-      ...queue,
+      id: queue.id,
+      name: queue.name,
       waiting: waitingCalls.length,
       agents: queueAgents.length,
       availableAgents,
       averageWaitSeconds,
       longestWaitSeconds,
-      serviceLevel: Math.max(70, Math.min(99, queue.serviceLevel - waitingCalls.length * 2 + Math.min(3, availableAgents))),
+      serviceLevel: Math.max(70, Math.min(99, 100 - waitingCalls.length * 2 + Math.min(3, availableAgents))),
     }
   })
+}
+
+export function updateRuntimeSettings(input: PbxRuntimeState, settings: PbxSettings, nowMs = Date.now()): PbxRuntimeState {
+  return { ...input, settings, lastProcessedAt: nowMs }
+}
+
+export function clearRuntimeData(state: PbxRuntimeState, nowMs = Date.now()): PbxRuntimeState {
+  return {
+    ...state,
+    calls: [],
+    wrapUpUntil: {},
+    schedules: {},
+    lastProcessedAt: nowMs,
+    nextIncomingAt: nowMs + 2000 // A tiny delay to let the engine restart
+  }
 }

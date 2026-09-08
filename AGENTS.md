@@ -27,3 +27,22 @@ Do not initialize, stage, commit, alter remotes, or publish Git state unless exp
 ## README Freeze Rule
 
 **CRITICAL**: The `CallBridge` branding, description, and the Mermaid diagram (mindmap) for features and quick start at the very top of `README.md` are **FROZEN**. It must NEVER be removed, modified, or overwritten under any circumstances. Always preserve this section exactly as it is in its visual design structure.
+
+## Table Design Guidelines
+
+When creating data tables in this project, you MUST adhere to the following professional and compact design principles:
+
+### 1. Structural Compactness
+- Avoid unnecessary white space between columns.
+- Use `width: "1%"` and `whiteSpace: "nowrap"` on minor columns (e.g., Status, Time, Actions, Phone Numbers).
+- Use `width: "98%"` (or a large percentage) on the primary content column (e.g., Description, Caller Name, Label) so that it flexes appropriately and absorbs the remaining space.
+
+### 2. Responsiveness
+- ALWAYS wrap tables in a `<div className="table-wrap">` or similar scrollable container (`overflow-x: auto`) to ensure horizontal scrolling on smaller screens.
+- Do not let long texts break the table layout.
+
+### 3. Essential Features for Data-Heavy Tables
+For tables expected to hold many records (such as Call History, Logs, or large directories):
+- **Pagination MUST be implemented.** (e.g., using `@tanstack/react-table` pagination or custom slice logic).
+- **Search / Filter MUST be implemented.** Users should be able to search through the records easily.
+- **Rows per page control MUST be included** (e.g., allowing users to select 10, 20, 50 rows).

@@ -12,6 +12,7 @@
     "verify:call-system": "python tests/call_system_contract_check.py"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.115.0",
     "@tanstack/react-table": "^8.21.3",
     "clsx": "^2.1.1",
     "lucide-react": "^1.27.0",

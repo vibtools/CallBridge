@@ -7,9 +7,23 @@ import { IncomingCallsPage } from "@/features/incoming-calls/IncomingCallsPage"
 import { LiveCallsPage } from "@/features/live-calls/LiveCallsPage"
 import { OverviewPage } from "@/features/overview/OverviewPage"
 import { QueuesPage } from "@/features/queues/QueuesPage"
+import { SettingsPage } from "@/features/settings/SettingsPage"
+import { AgentsSettingsPage } from "@/features/settings/AgentsSettingsPage"
+import { QueuesSettingsPage } from "@/features/settings/QueuesSettingsPage"
+import { DidPage } from "@/features/did/DidPage"
+import { DidSettingsPage } from "@/features/did/DidSettingsPage"
+import { ExtensionsPage } from "@/features/directory/ExtensionsPage"
+import { RingGroupsPage } from "@/features/routing/RingGroupsPage"
+import { IvrPage } from "@/features/routing/IvrPage"
+import { VoicemailPage } from "@/features/voicemail/VoicemailPage"
+import { AnalyticsPage } from "@/features/analytics/AnalyticsPage"
+import { PhonebookPage } from "@/features/directory/PhonebookPage"
+
 import { armRingtone, setRingtoneActive, stopRingtone } from "@/lib/ringtone"
+import { fetchSettingsFromDb, saveSettingsToDb } from "@/lib/settingsDb"
 import {
   HEARTBEAT_MS,
+
   RUNTIME_STORAGE_KEY,
   answerRuntimeCall,
   declineRuntimeCall,
@@ -20,12 +34,14 @@ import {
   restoreRuntime,
   serializeRuntime,
   toggleRuntimeHold,
+  updateRuntimeSettings,
+  clearRuntimeData,
 } from "@/runtime/pbxRuntime"
 import type { AppPage, PbxCall } from "@/types/pbx"
 import type { AppTheme } from "@/types/theme"
 
 function readInitialTheme(): AppTheme {
-  return document.documentElement.dataset.theme === "light" ? "light" : "dark"
+  return "light"
 }
 
 function readInitialRuntime() {
@@ -41,6 +57,14 @@ export default function App() {
   const [runtime, setRuntime] = useState(readInitialRuntime)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [theme, setTheme] = useState<AppTheme>(readInitialTheme)
+
+  useEffect(() => {
+    fetchSettingsFromDb().then((dbSettings) => {
+      if (dbSettings) {
+        setRuntime((current) => updateRuntimeSettings(current, { ...current.settings, ...dbSettings }, Date.now()))
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const syncNow = () => setRuntime((current) => reconcileRuntime(current, Date.now()))
@@ -88,7 +112,7 @@ export default function App() {
       // Theme persistence is optional; the UI still works when storage is unavailable.
     }
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-    if (themeColor) themeColor.content = theme === "light" ? "#F3F7FB" : "#0D1117"
+    if (themeColor) themeColor.content = "#F1F5F9"
   }, [theme])
 
   const runtimeAgents = useMemo(() => deriveRuntimeAgents(runtime, runtime.lastProcessedAt), [runtime])
@@ -101,6 +125,18 @@ export default function App() {
     : page === "incoming" ? <IncomingCallsPage calls={calls} onAnswer={(id) => { setRuntime((current) => answerRuntimeCall(current, id, Date.now())); setPage("live") }} onDecline={(id) => setRuntime((current) => declineRuntimeCall(current, id, Date.now()))} />
     : page === "cdr" ? <CallHistoryPage calls={calls} onOpen={openCall} />
     : page === "queues" ? <QueuesPage queues={runtimeQueues} />
+    : page === "settings" ? <SettingsPage settings={runtime.settings} onSettingsChange={(s) => { saveSettingsToDb(s); setRuntime((current) => updateRuntimeSettings(current, s, Date.now())) }} onClearData={() => setRuntime(current => clearRuntimeData(current))} />
+    : page === "settings-agents" ? <AgentsSettingsPage />
+    : page === "did" ? <DidPage dids={runtime.settings.dids || []} />
+    : page === "settings-did" ? <DidSettingsPage dids={runtime.settings.dids || []} onUpdate={(newDids) => setRuntime((current) => updateRuntimeSettings(current, { ...current.settings, dids: newDids }, Date.now()))} />
+    : page === "settings-queues" ? <QueuesSettingsPage queues={runtime.settings.queues || []} onUpdate={(newQueues) => setRuntime((current) => updateRuntimeSettings(current, { ...current.settings, queues: newQueues }, Date.now()))} />
+    : page === "extensions" ? <ExtensionsPage />
+    : page === "ring-groups" ? <RingGroupsPage />
+    : page === "ivr" ? <IvrPage />
+    : page === "voicemail" ? <VoicemailPage />
+    : page === "analytics" ? <AnalyticsPage calls={calls} />
+    : page === "phonebook" ? <PhonebookPage />
+
     : <AgentsPage agents={runtimeAgents} />
 
   const liveCount = calls.filter((c) => ["connected", "hold", "ringing", "waiting"].includes(c.status)).length

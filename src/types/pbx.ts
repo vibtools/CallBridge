@@ -68,4 +68,4 @@ export interface Queue {
   serviceLevel: number
 }
 
-export type AppPage = "overview" | "live" | "incoming" | "cdr" | "queues" | "agents"
+export type AppPage = "overview" | "live" | "incoming" | "cdr" | "voicemail" | "queues" | "ring-groups" | "ivr" | "agents" | "extensions" | "phonebook" | "did" | "settings-did" | "analytics" | "settings" | "settings-agents" | "settings-queues"

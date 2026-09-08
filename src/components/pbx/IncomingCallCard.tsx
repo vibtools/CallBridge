@@ -17,6 +17,9 @@ export function IncomingCallCard({ call, onAnswer, onDecline }: { call: PbxCall;
       <div className="meta-block"><div className="meta-label">DID</div><div className="meta-value mono">{call.did ?? "—"}</div></div>
       <div className="meta-block"><div className="meta-label">Destination</div><div className="meta-value">{call.extension ? `Ext ${call.extension}` : call.callee}</div></div>
     </div>
-    <div className="incoming-actions"><Button variant="danger" onClick={() => onDecline(call.id)}><PhoneOff />Decline</Button><Button variant="primary" onClick={() => onAnswer(call.id)}><PhoneCall />Answer</Button></div>
+    <div className="incoming-actions">
+      <Button variant="danger" onClick={() => onDecline(call.id)}><PhoneOff />Decline</Button>
+      <Button style={{ backgroundColor: "#10B981", color: "#FFFFFF", borderColor: "#10B981" }} onClick={() => onAnswer(call.id)}><PhoneCall />Answer</Button>
+    </div>
   </div>
 }
